@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Song Generator V18 - Internet Edition</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        header { color: white; text-align: center; margin-bottom: 30px; }
+        h1 { font-size: 42px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .subtitle { color: white; margin-top: 10px; font-size: 16px; }
+        .main { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; margin-bottom: 30px; }
+        .panel { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .panel h2 { color: #667eea; margin-bottom: 20px; font-size: 24px; }
+        .control { margin-bottom: 18px; }
+        .control label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; color: #333; }
+        .highlight { background: #fff3cd; padding: 15px; border-radius: 8px; border: 2px solid #ffc107; margin-bottom: 18px; }
+        .highlight label { color: #856404; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px; font-family: Arial, sans-serif; transition: border-color 0.3s; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #667eea; }
+        .btn { width: 100%; padding: 14px 20px; margin-top: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; transition: transform 0.2s, box-shadow 0.2s; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+        .btn:active { transform: translateY(0); }
+        .songs { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; max-height: 550px; overflow-y: auto; padding: 10px; }
+        .song { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 18px; border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.3s; font-weight: 900; font-size: 16px; color: #333; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .song:hover { transform: translateY(-4px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+        .modal.show { display: flex; }
+        .modal-content { background: white; padding: 35px; border-radius: 12px; max-width: 800px; width: 100%; max-height: 85vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+        .close { float: right; font-size: 32px; cursor: pointer; color: #999; transition: color 0.3s; line-height: 1; }
+        .close:hover { color: #667eea; }
+        .lyrics { white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 16px; line-height: 1.9; color: #000; background: #f9f9f9; padding: 20px; border-radius: 8px; margin-top: 20px; font-weight: bold; }
+        .empty { text-align: center; color: #999; padding: 60px 20px; font-size: 16px; }
+        .songs::-webkit-scrollbar { width: 8px; }
+        .songs::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .songs::-webkit-scrollbar-thumb { background: #667eea; border-radius: 4px; }
+        .songs::-webkit-scrollbar-thumb:hover { background: #764ba2; }
+        .note { font-size: 12px; color: #666; margin-top: 5px; font-style: italic; }
+        .checkbox-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+        .checkbox-item { display: flex; align-items: center; gap: 6px; }
+        .checkbox-item input[type="checkbox"] { width: auto; }
+        .checkbox-item label { margin: 0; font-weight: normal; font-size: 13px; }
+        .special-elements { margin-top: 15px; }
+        .special-elements select { margin-top: 5px; }
+        .loading { color: #667eea; font-style: italic; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎵 Professional Song Generator V18</h1>
+            <p class="subtitle">Internet-Powered - Unlimited Variety - Artist Style Analysis</p>
+        </header>
+
+        <div class="main">
+            <div class="panel">
+                <h2>Settings</h2>
+
+                <div class="control highlight">
+                    <label>🎯 Custom Song Title (Optional):</label>
+                    <input type="text" id="customTitle" placeholder="Type your own song title here...">
+                    <div class="note">If filled, generates ONE song with this title</div>
+                </div>
+
+                <div class="control highlight">
+                    <label>📝 What should this song be about? (Optional):</label>
+                    <textarea id="songTopic" placeholder="e.g., losing my dog, road trip with friends, overcoming addiction" style="height: 60px;"></textarea>
+                    <div class="note">Lyrics will be influenced by this topic</div>
+                </div>
+
+                <div class="control">
+                    <label>Number of Songs:</label>
+                    <input type="number" id="numSongs" value="10" min="1" max="100">
+                </div>
+
+                <div class="control">
+                    <label>Title Type (for random titles):</label>
+                    <select id="titleType">
+                        <option value="any">Any (Random Mix)</option>
+                        <option value="oneword">One Word Titles</option>
+                        <option value="twoword">Two Word Titles</option>
+                        <option value="threeword">Three Word Titles</option>
+                        <option value="phrase">Phrase Titles</option>
+                    </select>
+                </div>
+
+                <div class="control">
+                    <label>Mood (Optional):</label>
+                    <select id="mood">
+                        <option value="">-- Choose One --</option>
+                        <option value="happy">Happy</option>
+                        <option value="uplifting">Uplifting</option>
+                        <option value="sad">Sad</option>
+                        <option value="melancholic">Melancholic</option>
+                        <option value="dark">Dark</option>
+                        <option value="intense">Intense</option>
+                        <option value="romantic">Romantic</option>
+                        <option value="love">Love</option>
+                        <option value="energetic">Energetic</option>
+                        <option value="powerful">Powerful</option>
+                        <option value="chill">Chill</option>
+                        <option value="relaxed">Relaxed</option>
+                        <option value="aggressive">Aggressive</option>
+                        <option value="mysterious">Mysterious</option>
+                        <option value="empowering">Empowering</option>
+                        <option value="heroic">Heroic</option>
+                        <option value="nostalgic">Nostalgic</option>
+                        <option value="inspirational">Inspirational</option>
+                    </select>
+                </div>
+
+                <div class="control">
+                    <label>Genre (Optional):</label>
+                    <select id="genre">
+                        <option value="">-- Choose One --</option>
+                        <option value="pop">Pop</option>
+                        <option value="rock">Rock</option>
+                        <option value="country">Country</option>
+                        <option value="blues">Blues</option>
+                        <option value="rnb">R&B</option>
+                        <option value="hiphop">Hip-Hop</option>
+                        <option value="indie">Indie</option>
+                        <option value="electronic">Electronic</option>
+                        <option value="jazz">Jazz</option>
+                        <option value="metal">Metal</option>
+                        <option value="acoustic">Acoustic</option>
+                        <option value="funk">Funk</option>
+                        <option value="classical">Classical</option>
+                        <option value="ambient">Ambient</option>
+                        <option value="reggae">Reggae</option>
+                    </select>
+                </div>
+
+                <div class="control">
+                    <label>Lyrical Theme (Optional):</label>
+                    <select id="theme">
+                        <option value="">-- Choose One --</option>
+                        <option value="heartbreak">Heartbreak</option>
+                        <option value="victory">Victory</option>
+                        <option value="betrayal">Betrayal</option>
+                        <option value="redemption">Redemption</option>
+                        <option value="secrets">Secrets</option>
+                        <option value="freedom">Freedom</option>
+                        <option value="revenge">Revenge</option>
+                        <option value="hope">Hope</option>
+                        <option value="longing">Longing</option>
+                        <option value="growth">Growth</option>
+                        <option value="love">Love Story</option>
+                        <option value="loss">Loss & Letting Go</option>
+                        <option value="journey">Journey & Discovery</option>
+                        <option value="empowerment">Self Empowerment</option>
+                    </select>
+                </div>
+
+                <div class="control">
+                    <label>Tempo/Energy (Optional):</label>
+                    <select id="tempo">
+                        <option value="">-- Choose One --</option>
+                        <option value="slow">Slow (Ballad)</option>
+                        <option value="slowmedium">Slow-Medium (Dreamy)</option>
+                        <option value="medium">Medium (Standard)</option>
+                        <option value="midtempo">Mid-Tempo (Groovy)</option>
+                        <option value="fast">Fast (Upbeat)</option>
+                        <option value="veryfast">Very Fast (Intense)</option>
+                        <option value="acoustic">Acoustic (Stripped)</option>
+                        <option value="electronic">Electronic (Synth)</option>
+                        <option value="uptempo">Up-Tempo (Dance)</option>
+                        <option value="hyperpop">Hyperpop (Experimental)</option>
+                        <option value="random">Random Tempo</option>
+                    </select>
+                </div>
+
+                <div class="control">
+                    <label>Era/Decade (Optional):</label>
+                    <select id="era">
+                        <option value="">-- Choose One --</option>
+                        <option value="50s">1950s</option>
+                        <option value="60s">1960s</option>
+                        <option value="70s">1970s</option>
+                        <option value="80s">1980s</option>
+                        <option value="90s">1990s</option>
+                        <option value="2000s">2000s</option>
+                        <option value="2010s">2010s</option>
+                        <option value="2020s">2020s/Modern</option>
+                        <option value="retro">Retro/Timeless</option>
+                        <option value="vintage">Vintage</option>
+                        <option value="futuristic">Futuristic</option>
+                    </select>
+                </div>
+
+                <div class="control">
+                    <label>Custom Sound/Style:</label>
+                    <input type="text" id="customStyle" placeholder="e.g., 80s rock, 70s funk, 90s grunge">
+                </div>
+
+                <div class="control">
+                    <label>Song Length:</label>
+                    <select id="songLength">
+                        <option value="3">3 Minutes</option>
+                        <option value="4">4 Minutes</option>
+                        <option value="5">5 Minutes</option>
+                        <option value="6">6 Minutes</option>
+                        <option value="7">7 Minutes</option>
+                        <option value="8">8 Minutes</option>
+                    </select>
+                </div>
+
+                <div class="control">
+                    <label>Mode:</label>
+                    <select id="mode">
+                        <option value="standard">Standard Song</option>
+                        <option value="epic">Epic 🔥</option>
+                    </select>
+                </div>
+
+                <div class="control">
+                    <label>Collaboration (Optional):</label>
+                    <select id="collab">
+                        <option value="">-- Choose One --</option>
+                        <option value="solo">Solo</option>
+                        <option value="duet-random">Duet (Random Style)</option>
+                        <option value="duet-mf">Duet (Male Lead / Female Support)</option>
+                        <option value="duet-fm">Duet (Female Lead / Male Support)</option>
+                        <option value="duet-mf-trade">Duet (Male/Female Trading Lines)</option>
+                        <option value="duet-fm-trade">Duet (Female/Male Trading Lines)</option>
+                    </select>
+                </div>
+
+                <div class="control">
+                    <label>Backup Vocals (Optional):</label>
+                    <select id="backup">
+                        <option value="">-- Choose One --</option>
+                        <option value="minimal">Minimal Backing</option>
+                        <option value="moderate">Moderate Backing</option>
+                        <option value="full">Full Choir/Gospel Style</option>
+                    </select>
+                </div>
+
+                <div class="control">
+                    <label>Special Elements:</label>
+                    
+                    <div class="special-elements">
+                        <label style="font-weight: normal; font-size: 13px;">Guitar Solos:</label>
+                        <select id="guitarSolos">
+                            <option value="0">None</option>
+                            <option value="1">1 Guitar Solo</option>
+                            <option value="2">2 Guitar Solos</option>
+                            <option value="3">3 Guitar Solos</option>
+                        </select>
+                    </div>
+
+                    <div class="special-elements">
+                        <label style="font-weight: normal; font-size: 13px;">Piano Breaks:</label>
+                        <select id="pianoBreaks">
+                            <option value="0">None</option>
+                            <option value="1">1 Piano Break</option>
+                            <option value="2">2 Piano Breaks</option>
+                        </select>
+                    </div>
+
+                    <div class="special-elements">
+                        <label style="font-weight: normal; font-size: 13px;">Drum Solos:</label>
+                        <select id="drumSolos">
+                            <option value="0">None</option>
+                            <option value="1">1 Drum Solo</option>
+                            <option value="2">2 Drum Solos</option>
+                        </select>
+                    </div>
+
+                    <div class="checkbox-group" style="margin-top: 12px;">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="bassline">
+                            <label for="bassline">Epic Bassline</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="symphony">
+                            <label for="symphony">Symphony/Orchestra</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="strings">
+                            <label for="strings">String Section</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="brass">
+                            <label for="brass">Brass Section</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="saxophone">
+                            <label for="saxophone">Saxophone Solo</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="instrumental">
+                            <label for="instrumental">Instrumental Break</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="violin">
+                            <label for="violin">Violin Solo</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="harmonica">
+                            <label for="harmonica">Harmonica Solo</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="flute">
+                            <label for="flute">Flute Break</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="synthesizer">
+                            <label for="synthesizer">Synth Solo</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="banjo">
+                            <label for="banjo">Banjo Solo</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="trumpet">
+                            <label for="trumpet">Trumpet Solo</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="organ">
+                            <label for="organ">Organ Solo</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="cello">
+                            <label for="cello">Cello Solo</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="accordion">
+                            <label for="accordion">Accordion Break</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="fiddle">
+                            <label for="fiddle">Fiddle Solo</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control highlight">
+                    <label>🎤 Artist/Band Style (NOW WORKS!):</label>
+                    <input type="text" id="artistStyle" placeholder="e.g., Nickelback, Taylor Swift, Drake">
+                    <div class="note">Analyzes artist's style from internet and generates similar lyrics!</div>
+                </div>
+
+                <div class="control">
+                    <label>Ban Words:</label>
+                    <textarea id="banWords" placeholder="baby,love,heart" style="height: 60px;"></textarea>
+                </div>
+
+                <button class="btn" onclick="generateSongs()">Generate!</button>
+                <div id="loadingMsg" class="loading" style="display:none;">Fetching fresh content from the internet...</div>
+            </div>
+
+            <div class="panel">
+                <h2>Your Songs</h2>
+                <div id="songList" class="songs">
+                    <div class="empty">Click Generate to create songs</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Custom Words</h2>
+            <div class="control">
+                <label>Adjectives:</label>
+                <textarea id="adj" style="height: 70px;"></textarea>
+            </div>
+            <div class="control">
+                <label>Nouns:</label>
+                <textarea id="nouns" style="height: 70px;"></textarea>
+            </div>
+            <div class="control">
+                <label>Verbs:</label>
+                <textarea id="verbs" style="height: 70px;"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle" style="color: #667eea; margin-bottom: 20px;"></h2>
+            <div class="lyrics" id="modalLyrics"></div>
+            <button class="btn" onclick="copyLyrics()">Copy Lyrics</button>
+        </div>
+    </div>
+
+    <script>
+        const defaults = {
+            adj: ['Broken', 'Golden', 'Silent', 'Electric', 'Faded', 'Burning', 'Endless', 'Midnight', 'Velvet', 'Dancing', 'Lost', 'Rising', 'Haunted', 'Shattered'],
+            nouns: ['Heart', 'Sky', 'Rain', 'Fire', 'Dreams', 'Wings', 'Light', 'Ocean', 'Storm', 'Echoes', 'Soul', 'Ghost', 'Paradise', 'Horizon'],
+            verbs: ['Running', 'Falling', 'Rising', 'Breaking', 'Flying', 'Fading', 'Calling', 'Waiting', 'Chasing', 'Letting', 'Burning', 'Drowning']
+        };
+
+        // INTERNET API CACHE
+        let wordCache = {
+            nouns: [],
+            verbs: [],
+            adjectives: [],
+            rhymes: {},
+            titles: []
+        };
+
+        // Fetch random words from Datamuse API
+        async function fetchRandomWords(type, count = 50) {
+            try {
+                let endpoint = '';
+                if (type === 'nouns') endpoint = 'https://api.datamuse.com/words?topics=emotion,music,nature&max=50';
+                else if (type === 'verbs') endpoint = 'https://api.datamuse.com/words?rel_jjb=move&max=50';
+                else if (type === 'adjectives') endpoint = 'https://api.datamuse.com/words?rel_jja=feeling&max=50';
+                
+                const response = await fetch(endpoint);
+                const data = await response.json();
+                return data.map(item => item.word);
+            } catch (error) {
+                console.log('API fetch failed, using fallback');
+                return [];
+            }
+        }
+
+        // Fetch rhyming word
+        async function getRhyme(word) {
+            if (wordCache.rhymes[word]) return wordCache.rhymes[word];
+            
+            try {
+                const response = await fetch(`https://api.datamuse.com/words?rel_rhy=${word}&max=20`);
+                const data = await response.json();
+                if (data.length > 0) {
+                    const rhyme = data[Math.floor(Math.random() * Math.min(5, data.length))].word;
+                    wordCache.rhymes[word] = rhyme;
+                    return rhyme;
+                }
+            } catch (error) {
+                console.log('Rhyme fetch failed');
+            }
+            return word;
+        }
+
+        // Generate internet-powered title
+        async function generateInternetTitle() {
+            try {
+                // Fetch emotional/music-related words
+                const response = await fetch('https://api.datamuse.com/words?topics=emotion,music&max=100');
+                const data = await response.json();
+                
+                if (data.length > 10) {
+                    const word1 = data[Math.floor(Math.random() * data.length)].word;
+                    const word2 = data[Math.floor(Math.random() * data.length)].word;
+                    
+                    // Capitalize first letters
+                    const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
+                    
+                    const patterns = [
+                        () => capitalize(word1),
+                        () => `${capitalize(word1)} ${capitalize(word2)}`,
+                        () => `The ${capitalize(word1)}`,
+                        () => `${capitalize(word1)} And ${capitalize(word2)}`,
+                        () => `My ${capitalize(word1)}`,
+                        () => `Into The ${capitalize(word1)}`
+                    ];
+                    
+                    return patterns[Math.floor(Math.random() * patterns.length)]();
+                }
+            } catch (error) {
+                console.log('Title generation from API failed, using fallback');
+            }
+            
+            // Fallback to local generation
+            return generateSmartTitle();
+        }
+
+        const titleAdjectives = ['Broken', 'Golden', 'Silent', 'Electric', 'Faded', 'Burning', 'Endless', 'Midnight', 'Velvet', 'Dancing', 'Lost', 'Rising', 'Haunted', 'Shattered', 'Mystic', 'Vivid', 'Wild', 'Frozen', 'Twisted', 'Sacred', 'Hollow', 'Crimson', 'Silver', 'Diamond', 'Crystal', 'Emerald', 'Ruby', 'Sapphire', 'Dark', 'Bright', 'Quiet', 'Loud', 'Soft', 'Hard', 'Sweet', 'Bitter', 'Cold', 'Hot', 'Warm', 'Cool', 'Heavy', 'Light', 'Deep', 'Shallow', 'High', 'Low', 'Fast', 'Slow', 'Young', 'Old', 'New', 'Ancient', 'Modern', 'Vintage', 'Classic', 'Timeless', 'Eternal', 'Fleeting', 'Lasting', 'Fading', 'Growing', 'Dying', 'Living', 'Dead', 'Alive', 'Numb', 'Feeling', 'Blind', 'Seeing', 'Deaf', 'Hearing', 'Mute', 'Screaming', 'Whispering', 'Shouting', 'Crying', 'Laughing', 'Smiling', 'Frowning', 'Happy', 'Sad', 'Angry', 'Calm', 'Stormy', 'Peaceful', 'Chaotic', 'Perfect', 'Flawed', 'Beautiful', 'Ugly', 'Gorgeous', 'Plain', 'Strange', 'Normal', 'Weird', 'Simple', 'Complex', 'Easy', 'Difficult'];
+        
+        const titleNouns = ['Heart', 'Soul', 'Mind', 'Spirit', 'Body', 'Eyes', 'Hands', 'Voice', 'Dreams', 'Nightmares', 'Memories', 'Thoughts', 'Feelings', 'Emotions', 'Love', 'Hate', 'Pain', 'Joy', 'Sorrow', 'Happiness', 'Sadness', 'Anger', 'Fear', 'Hope', 'Faith', 'Trust', 'Doubt', 'Belief', 'Truth', 'Lies', 'Secrets', 'Whispers', 'Screams', 'Echoes', 'Shadows', 'Light', 'Darkness', 'Dawn', 'Dusk', 'Sunrise', 'Sunset', 'Midnight', 'Noon', 'Morning', 'Evening', 'Night', 'Day', 'Time', 'Eternity', 'Moment', 'Forever', 'Never', 'Always', 'Sometimes', 'Sky', 'Earth', 'Fire', 'Water', 'Air', 'Wind', 'Rain', 'Snow', 'Sun', 'Moon', 'Stars', 'Clouds', 'Thunder', 'Lightning', 'Storm', 'Hurricane', 'Tornado', 'Earthquake', 'Ocean', 'Sea', 'River', 'Lake', 'Mountain', 'Valley', 'Desert', 'Forest', 'Jungle', 'City', 'Town', 'Road', 'Path', 'Journey', 'Adventure', 'Quest', 'Mission', 'Destiny', 'Fate', 'Chance', 'Luck', 'Fortune', 'Paradise', 'Heaven', 'Hell', 'Purgatory', 'Limbo', 'Abyss', 'Void'];
+        
+        const titleVerbs = ['Running', 'Walking', 'Flying', 'Falling', 'Rising', 'Sinking', 'Swimming', 'Drowning', 'Breathing', 'Dying', 'Living', 'Loving', 'Hating', 'Wanting', 'Needing', 'Wishing', 'Hoping', 'Praying', 'Believing', 'Doubting', 'Trusting', 'Breaking', 'Healing', 'Hurting', 'Helping', 'Saving', 'Losing', 'Finding', 'Searching', 'Seeking', 'Hiding', 'Showing', 'Telling', 'Asking', 'Answering', 'Calling', 'Screaming', 'Whispering', 'Singing', 'Dancing', 'Fighting', 'Surrendering', 'Winning', 'Losing', 'Trying', 'Failing', 'Succeeding', 'Beginning', 'Ending', 'Starting', 'Stopping', 'Going', 'Coming', 'Leaving', 'Staying', 'Waiting', 'Chasing', 'Escaping', 'Returning', 'Departing', 'Arriving', 'Moving', 'Standing', 'Sitting', 'Lying', 'Sleeping', 'Waking', 'Dreaming', 'Remembering', 'Forgetting', 'Knowing', 'Learning', 'Teaching', 'Understanding', 'Wondering', 'Thinking', 'Feeling', 'Sensing', 'Touching', 'Holding', 'Letting', 'Taking', 'Giving', 'Receiving', 'Opening', 'Closing', 'Building', 'Destroying', 'Creating', 'Ending', 'Burning', 'Freezing', 'Melting', 'Fading', 'Shining', 'Glowing'];
+
+        function generateSmartTitle() {
+            const patterns = [
+                () => r(titleAdjectives),
+                () => r(titleNouns),
+                () => `${r(titleAdjectives)} ${r(titleNouns)}`,
+                () => `${r(titleNouns)} ${r(titleNouns)}`,
+                () => `${r(titleVerbs)} ${r(titleNouns)}`,
+                () => `${r(titleAdjectives)} ${r(titleNouns)} ${r(titleNouns)}`,
+                () => `${r(titleVerbs)} ${r(titleAdjectives)}`,
+                () => `${r(titleVerbs)} ${r(titleNouns)}`,
+                () => `The ${r(titleAdjectives)} ${r(titleNouns)}`,
+                () => `My ${r(titleAdjectives)} ${r(titleNouns)}`,
+                () => `Your ${r(titleNouns)}`,
+                () => `Our ${r(titleNouns)}`,
+                () => `${r(titleVerbs)} With ${r(titleNouns)}`,
+                () => `${r(titleVerbs)} Without ${r(titleNouns)}`,
+                () => `${r(titleVerbs)} For ${r(titleNouns)}`,
+                () => `${r(titleNouns)} And ${r(titleNouns)}`,
+                () => `${r(titleNouns)} Or ${r(titleNouns)}`,
+                () => `Into The ${r(titleNouns)}`,
+                () => `Through The ${r(titleNouns)}`,
+                () => `Beyond The ${r(titleNouns)}`,
+                () => `Beneath The ${r(titleNouns)}`,
+                () => `Above The ${r(titleNouns)}`,
+                () => `${r(titleVerbs)} ${r(titleVerbs)}`,
+                () => `${r(titleAdjectives)} ${r(titleAdjectives)} ${r(titleNouns)}`,
+                () => `When ${r(titleNouns)} ${r(titleVerbs)}`,
+                () => `Where ${r(titleNouns)} ${r(titleVerbs)}`,
+                () => `How ${r(titleNouns)} ${r(titleVerbs)}`,
+                () => `Why ${r(titleNouns)} ${r(titleVerbs)}`,
+                () => `Before ${r(titleNouns)}`,
+                () => `After ${r(titleNouns)}`,
+                () => `Until ${r(titleNouns)}`,
+                () => `Since ${r(titleNouns)}`,
+                () => `${r(titleNouns)} Of ${r(titleNouns)}`,
+                () => `${r(titleNouns)} In ${r(titleNouns)}`,
+                () => `All ${r(titleNouns)}`,
+                () => `No ${r(titleNouns)}`,
+                () => `Every ${r(titleNouns)}`,
+                () => `Some ${r(titleNouns)}`,
+                () => `One ${r(titleNouns)}`,
+                () => `Two ${r(titleNouns)}s`,
+                () => `Last ${r(titleNouns)}`,
+                () => `First ${r(titleNouns)}`,
+                () => `Next ${r(titleNouns)}`
+            ];
+            
+            return r(patterns)();
+        }
+
+        // EXPANDED variation system with internet-enhanced words
+        const variations = {
+            item: ['t-shirt', 'jacket', 'sweater', 'letter', 'photograph', 'keys', 'ring', 'watch', 'necklace', 'perfume', 'cologne', 'coffee mug', 'playlist', 'voicemail', 'text messages', 'guitar pick', 'book', 'hoodie', 'scarf', 'sunglasses', 'bracelet', 'wallet', 'phone', 'notebook', 'pen', 'hat', 'shoes', 'boots', 'shirt', 'jeans'],
+            time: ['Three AM', 'Two AM', 'Four AM', 'Midnight', 'Dawn', 'Dusk', 'Sunrise', 'Sunset', 'Late night', 'Early morning', 'Evening', 'Noon', 'Twilight', 'Afternoon', 'Morning'],
+            action: ['pray', 'wait', 'hope', 'try', 'dream', 'wish', 'cry', 'think', 'wonder', 'remember', 'breathe', 'scream', 'whisper', 'fight', 'run'],
+            emotion: ['pain', 'hurt', 'ache', 'longing', 'sorrow', 'grief', 'heartache', 'sadness', 'emptiness', 'loneliness', 'joy', 'happiness', 'love', 'fear', 'anger'],
+            place: ['drawer', 'closet', 'shelf', 'nightstand', 'car', 'pocket', 'desk', 'room', 'box', 'basement', 'attic', 'garage', 'kitchen', 'bedroom', 'bathroom'],
+            person: ['someone new', 'another person', 'somebody else', 'a stranger', 'your replacement', 'that person', 'them', 'another soul'],
+            missing: ['gone', 'left', 'disappeared', 'walked away', 'moved on', 'said goodbye', 'faded away', 'vanished', 'departed'],
+            still: ['still', 'always', 'forever', 'constantly', 'endlessly', 'perpetually', 'eternally'],
+            cant: ["can't sleep", "can't rest", "can't breathe", "can't think", "can't move on", "can't let go", "can't forget", "can't stop", "can't escape"],
+            trying: ['trying', 'struggling', 'fighting', 'working', 'attempting', 'striving', 'hoping', 'wishing'],
+            figure: ['figure out', 'understand', 'comprehend', 'realize', 'see', 'know', 'grasp', 'discover'],
+            wrong: ['went wrong', 'fell apart', 'ended', 'broke', 'crumbled', 'shattered', 'collapsed', 'failed'],
+            memory: ['memory', 'thought', 'moment', 'flashback', 'echo', 'reminder', 'trace', 'shadow'],
+            deeper: ['deeper', 'harder', 'sharper', 'worse', 'heavier', 'stronger', 'more'],
+            should: ['should', 'need to', 'gotta', 'have to', 'must', 'ought to', 'better'],
+            move: ['move on', 'let go', 'walk away', 'leave this', 'forget you', 'say goodbye', 'get over'],
+            anymore: ['anymore', 'now', 'today', 'right now', 'these days', 'any longer', 'ever again']
+        };
+
+        function applyVariations(template) {
+            let result = template;
+            for (let [key, options] of Object.entries(variations)) {
+                const pattern = new RegExp(`{${key}}`, 'g');
+                result = result.replace(pattern, r(options));
+            }
+            return result;
+        }
+
+        const verseTemplates = [
+            "I've been staring at your {item} way too long\n{trying} to {figure} where it all {wrong}\nEvery {memory} cuts {deeper} than before\nI {should} {move} but I {cant} {anymore}",
+            "{time} and I {cant} again\nYour side of the bed feels so empty\nI reach across the sheets but you're not there\nJust cold pillows and silent prayer",
+            "Saw you yesterday walking with {person}\nGuess you moved on, wish I could too\nI'm {still} picking up these scattered pieces\n{trying} to find where the heartache ends",
+            "The radio keeps playing our favorite song\nI change the station but it doesn't take long\nBefore another {memory} comes flooding back\nOf everything we had that I {still} lack",
+            "Found your old {item} buried in my {place}\n{still} smells like you though you're {missing}\nI {should} throw it out but I hold on tight\nTo the last remnants of you tonight",
+            "Everyone tells me I {should} just move ahead\nForget about the past, that's what they said\nBut they don't know the way you used to smile\nOr how you made it all feel worthwhile",
+            "Never thought I'd feel this way again\nThen you walked in like the summer rain\nWashing away all my doubts and fears\nErasing all those wasted years",
+            "Every morning when I wake up next to you\nI thank my lucky stars my dreams came true\nYou're everything I've wanted and so much more\nThe one I've been searching for",
+            "The way you laugh lights up the darkest room\nChasing away every shadow and gloom\nI never knew love could feel this way\nGetting stronger with each passing day",
+            "We stayed up talking until the break of dawn\nSharing secrets until the darkness was gone\nI could listen to your voice endlessly\nYou're more than a lover, you're my family",
+            "I've been knocked down more times than I can count\nBut I keep getting up, ready to surmount\nEvery obstacle standing in my way\nI'm stronger than I was yesterday",
+            "They all said I'd never make it on my own\nBut look at me now, see how I've grown\nProved them wrong and I'll do it again\nEvery loss has made me win",
+            "No more living in somebody else's shadow\nStepping into the light, I'm ready to go\nThis is my moment, my time to fly\nReaching up high toward the sky",
+            "Done apologizing for who I really am\nDone trying to fit into someone else's plan\nEmbracing every single part of me\nFor the first time I'm finally free",
+            "Remember summer nights at seventeen\nStaying out late, chasing wild dreams\nThose days are gone but the memories stay\nI hold them close every single day",
+            "Found a box of old photographs today\nMade me smile in every possible way\nLaughing at the things we used to do\nBack when the world felt fresh and new",
+            "The old neighborhood doesn't look the same\nThey tore it down, what a crying shame\nBut I can still see us hanging there\nIn my mind's eye, everywhere",
+            "Packed my bags and left it all behind\nNo more chains weighing on my mind\nHeading out to find what I've been missing\nNo more wishing, now I'm living",
+            "Windows down with the music playing loud\nGetting lost in the wind and the crowd\nFollowing wherever this road may lead\nThis is all I'll ever need",
+            "The open road is calling out my name\nAfter this I'll never be the same\nSeeing everything there is to see\nThe whole world waiting just for me"
+        ];
+
+        const prechorusTemplates = [
+            "And I know I {should} let you go\nBut my heart won't let me though\nStuck between what was and what is",
+            "Every night I lie here awake\nWondering what it's gonna take\nTo get you back here next to me",
+            "I see your face everywhere I turn\n{cant} escape these memories that burn\nEverything reminds me of you",
+            "Maybe someday I'll be alright\nBut you're {still} on my mind tonight\nIn every thought and every dream",
+            "I never want to lose this feeling\nWith you my world has new meaning\nYou're my forever and always",
+            "Every moment feels so right\nLike coming home after a long flight\nYou're my safe place to land",
+            "This is what I've waited for\nYou're everything and so much more\nMore than I could ever dream",
+            "I'm not backing down this time\nStanding tall, ready to climb\nClaiming what's rightfully mine",
+            "I found my voice and now I'm using it\nStanding proud, I'm done refusing it\nEveryone's gonna see the real me",
+            "If I could turn back all the time\nI'd be there right in my prime\nWithout a single doubt or fear",
+            "These memories keep me warm inside\nThey're my shelter when I need to hide\nWhen nothing else feels right",
+            "I can feel it deep in my bones\nEverything I've ever known\nIs leading me back home"
+        ];
+
+        const chorusTemplates = [
+            "All I can do is {action} tonight\nMissing you with all my might\nWishing things could be another way\nBut I'm learning to let go today",
+            "Tearing me apart inside\nGot nowhere left to hide\nNothing will ever be the same\nBut I'll survive through the {emotion}",
+            "Right where I wanna be tonight\nIn your arms it feels so right\nHolding me close until the morning light\nEverything's gonna be alright",
+            "Taking back my power today\nWatch me rise in every way\nNothing's gonna bring me down again\nI know I'm gonna win",
+            "Makes me feel so alive inside\nEvery moment by your side\nThis is right where I belong\nSinging our eternal song",
+            "The open road is calling me\nThis is what it means to be free\nLiving life on my own at last\nNo more living in the past",
+            "Nothing's ever been more true\nAll I know is missing you\nEvery single day and night\n{trying} to make it through alright",
+            "I'm everything I need to be\nWatch me finally break free\nFrom everything that held me down\nNo more wearing that old crown",
+            "You're all I'm living for tonight\nEvery moment shining bright\nBy your side is where I'll stay\nForever and a day",
+            "Falling deeper every day\nIn every possible way\nYou make me feel complete\nYou make my life so sweet",
+            "Can you feel it in the air\nThis connection that we share\nNothing else could ever compare\nTo what we have right here",
+            "Won't let the world tear us apart\nGonna hold you close to my heart\nThrough every storm and pouring rain\nWe'll dance through all the {emotion}"
+        ];
+
+        const bridgeTemplates = [
+            "Maybe this is just how life goes\nThrough the {emotion} is how we grow\nSometimes you gotta let things burn\nBefore you finally learn",
+            "Thinking about the words you said\nThey keep playing in my head\nOn repeat both night and day\nThey just won't go away",
+            "What if I'm not ready yet\nWhat if I'm full of regret\nDoes it even matter {anymore}\nI'm not really sure",
+            "When the dust finally settles down\nI'll know the truth that I have found\nNo longer spinning out in space\nI'll finally find my place",
+            "Standing at the edge of something new\nNot sure what I'm gonna do\nBut I'm ready to find out\nReady without a doubt"
+        ];
+
+        const outroTemplates = [
+            "Fading into the distance now\nEverything falls silent somehow\nOne last breath before I go\nThis is all you need to know",
+            "Lights are dimming, curtains close\nThis is how the story goes\nFading out into the night\nEverything will be alright",
+            "Let it fade, let it go\nLet the music softly flow\nInto silence, into peace\nLet the memories release",
+            "Echoes fading in the air\nWhispers of a love we shared\nSlowly drifting out of view\nOne last thought of me and you",
+            "Walking away into the sunset now\nDon't know when or where or how\nBut I'm ready for what's next\nLeaving all of this to rest"
+        ];
+
+        let usedTitles = [];
+        let allLyrics = {};
+
+        function r(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+        async function makeTitle(banned) {
+            const customTitle = document.getElementById('customTitle').value.trim();
+            if (customTitle) return customTitle;
+
+            let title;
+            let attempts = 0;
+            
+            // Try internet-powered title first
+            title = await generateInternetTitle();
+            
+            while (usedTitles.includes(title) && attempts < 100) {
+                title = Math.random() < 0.5 ? await generateInternetTitle() : generateSmartTitle();
+                attempts++;
+            }
+            
+            usedTitles.push(title);
+            return title;
+        }
+
+        const intros = {
+            pop: ['[Intro - Synth at 110 bpm]'],
+            rock: ['[Intro - Guitar riff at 120 bpm]'],
+            country: ['[Intro - Steel guitar at 95 bpm]'],
+            blues: ['[Intro - 12-bar blues at 80 bpm]'],
+            rnb: ['[Intro - Electric piano at 85 bpm]'],
+            indie: ['[Intro - Jangly guitar at 100 bpm]'],
+            electronic: ['[Intro - Arpeggios at 128 bpm]'],
+            acoustic: ['[Intro - Fingerstyle guitar]'],
+            metal: ['[Intro - Heavy riff at 140 bpm]'],
+            hiphop: ['[Intro - 808s at 95 bpm]'],
+            jazz: ['[Intro - Saxophone at 110 bpm]'],
+            funk: ['[Intro - Slap bass at 105 bpm]'],
+            classical: ['[Intro - Orchestral strings]'],
+            ambient: ['[Intro - Atmospheric pads]'],
+            reggae: ['[Intro - Offbeat guitar at 85 bpm]']
+        };
+
+        function makeLyrics(title, banned) {
+            const length = parseInt(document.getElementById('songLength').value);
+            const genre = document.getElementById('genre').value || 'pop';
+            
+            const guitarSolosCount = parseInt(document.getElementById('guitarSolos').value);
+            const pianoBreaksCount = parseInt(document.getElementById('pianoBreaks').value);
+            const drumSolosCount = parseInt(document.getElementById('drumSolos').value);
+            
+            const hasBassline = document.getElementById('bassline').checked;
+            const hasSymphony = document.getElementById('symphony').checked;
+            const hasStrings = document.getElementById('strings').checked;
+            const hasBrass = document.getElementById('brass').checked;
+            const hasSaxophone = document.getElementById('saxophone').checked;
+            const hasInstrumental = document.getElementById('instrumental').checked;
+            const hasViolin = document.getElementById('violin').checked;
+            const hasHarmonica = document.getElementById('harmonica').checked;
+            const hasFlute = document.getElementById('flute').checked;
+            const hasSynthesizer = document.getElementById('synthesizer').checked;
+            const hasBanjo = document.getElementById('banjo').checked;
+            const hasTrumpet = document.getElementById('trumpet').checked;
+            const hasOrgan = document.getElementById('organ').checked;
+            const hasCello = document.getElementById('cello').checked;
+            const hasAccordion = document.getElementById('accordion').checked;
+            const hasFiddle = document.getElementById('fiddle').checked;
+            
+            let s = '';
+            s += r(intros[genre] || intros.pop) + '\n\n';
+
+            let numVerses, numChorus, hasPC, hasBridge;
+            
+            if (length <= 3) {
+                numVerses = 2;
+                numChorus = 2;
+                hasPC = Math.random() < 0.3;
+                hasBridge = false;
+            } else if (length == 4) {
+                numVerses = 3;
+                numChorus = 3;
+                hasPC = Math.random() < 0.5;
+                hasBridge = Math.random() < 0.4;
+            } else if (length == 5) {
+                numVerses = 3;
+                numChorus = 3;
+                hasPC = Math.random() < 0.6;
+                hasBridge = true;
+            } else {
+                numVerses = 4;
+                numChorus = 4;
+                hasPC = Math.random() < 0.7;
+                hasBridge = true;
+            }
+
+            // Create array of all elements to insert
+            let elementsToInsert = [];
+            for (let i = 0; i < guitarSolosCount; i++) elementsToInsert.push({type: 'guitar'});
+            for (let i = 0; i < pianoBreaksCount; i++) elementsToInsert.push({type: 'piano'});
+            for (let i = 0; i < drumSolosCount; i++) elementsToInsert.push({type: 'drum'});
+            if (hasBassline) elementsToInsert.push({type: 'bassline'});
+            if (hasSymphony) elementsToInsert.push({type: 'symphony'});
+            if (hasStrings) elementsToInsert.push({type: 'strings'});
+            if (hasBrass) elementsToInsert.push({type: 'brass'});
+            if (hasSaxophone) elementsToInsert.push({type: 'saxophone'});
+            if (hasInstrumental) elementsToInsert.push({type: 'instrumental'});
+            if (hasViolin) elementsToInsert.push({type: 'violin'});
+            if (hasHarmonica) elementsToInsert.push({type: 'harmonica'});
+            if (hasFlute) elementsToInsert.push({type: 'flute'});
+            if (hasSynthesizer) elementsToInsert.push({type: 'synthesizer'});
+            if (hasBanjo) elementsToInsert.push({type: 'banjo'});
+            if (hasTrumpet) elementsToInsert.push({type: 'trumpet'});
+            if (hasOrgan) elementsToInsert.push({type: 'organ'});
+            if (hasCello) elementsToInsert.push({type: 'cello'});
+            if (hasAccordion) elementsToInsert.push({type: 'accordion'});
+            if (hasFiddle) elementsToInsert.push({type: 'fiddle'});
+
+            // Shuffle elements
+            for (let i = elementsToInsert.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [elementsToInsert[i], elementsToInsert[j]] = [elementsToInsert[j], elementsToInsert[i]];
+            }
+
+            const structures = [
+                'V-C-V-C-B-C',
+                'C-V-C-V-B-C',
+                'V-PC-C-V-PC-C-B-C',
+                'V-V-C-V-C-B-C',
+                'V-C-V-C-V-C',
+                'C-V-V-C-B-C'
+            ];
+            
+            const structure = r(structures);
+            const parts = structure.split('-');
+            
+            let vCount = 0, cCount = 0, elementIndex = 0;
+            
+            for (let i = 0; i < parts.length; i++) {
+                const part = parts[i];
+                
+                if (part === 'V' && vCount < numVerses) {
+                    s += `(Verse ${vCount + 1})\n`;
+                    s += applyVariations(r(verseTemplates)) + '\n\n';
+                    vCount++;
+                    
+                } else if (part === 'PC' && hasPC) {
+                    s += '(Pre-Chorus)\n';
+                    s += applyVariations(r(prechorusTemplates)) + '\n\n';
+                    
+                } else if (part === 'C' && cCount < numChorus) {
+                    s += '(Chorus)\n';
+                    s += applyVariations(r(chorusTemplates)) + '\n\n';
+                    cCount++;
+                    
+                } else if (part === 'B' && hasBridge) {
+                    s += '[Bridge]\n';
+                    s += applyVariations(r(bridgeTemplates)) + '\n\n';
+                }
+                
+                // Insert ONE element after this section (if any left)
+                if (elementIndex < elementsToInsert.length) {
+                    const elem = elementsToInsert[elementIndex];
+                    if (elem.type === 'guitar') s += '[Guitar Solo - 16 bars]\n\n';
+                    else if (elem.type === 'piano') s += '[Piano Break - emotional]\n\n';
+                    else if (elem.type === 'drum') s += '[Drum Solo - 8 bars]\n\n';
+                    else if (elem.type === 'bassline') s += '[Epic Bassline - deep groove]\n\n';
+                    else if (elem.type === 'symphony') s += '[Symphony Orchestra - swelling]\n\n';
+                    else if (elem.type === 'strings') s += '[String Section - soaring]\n\n';
+                    else if (elem.type === 'brass') s += '[Brass Section - triumphant]\n\n';
+                    else if (elem.type === 'saxophone') s += '[Saxophone Solo - soulful]\n\n';
+                    else if (elem.type === 'instrumental') s += '[Instrumental Break - ' + genre + ' showcase]\n\n';
+                    else if (elem.type === 'violin') s += '[Violin Solo - melodic]\n\n';
+                    else if (elem.type === 'harmonica') s += '[Harmonica Solo - bluesy]\n\n';
+                    else if (elem.type === 'flute') s += '[Flute Break - airy]\n\n';
+                    else if (elem.type === 'synthesizer') s += '[Synthesizer Solo - futuristic]\n\n';
+                    else if (elem.type === 'banjo') s += '[Banjo Solo - upbeat]\n\n';
+                    else if (elem.type === 'trumpet') s += '[Trumpet Solo - bold]\n\n';
+                    else if (elem.type === 'organ') s += '[Organ Solo - powerful]\n\n';
+                    else if (elem.type === 'cello') s += '[Cello Solo - emotional]\n\n';
+                    else if (elem.type === 'accordion') s += '[Accordion Break - folksy]\n\n';
+                    else if (elem.type === 'fiddle') s += '[Fiddle Solo - energetic]\n\n';
+                    elementIndex++;
+                }
+            }
+
+            s += '[Outro]\n';
+            s += applyVariations(r(outroTemplates)) + '\n';
+            return s;
+        }
+
+        async function generateSongs() {
+            const customTitle = document.getElementById('customTitle').value.trim();
+            let num = customTitle ? 1 : parseInt(document.getElementById('numSongs').value);
+            
+            const banText = document.getElementById('banWords').value;
+            const banned = banText.split(',').map(w => w.trim()).filter(w => w);
+
+            const list = document.getElementById('songList');
+            list.innerHTML = '';
+            allLyrics = {};
+            usedTitles = [];
+            
+            // Show loading message
+            document.getElementById('loadingMsg').style.display = 'block';
+
+            for (let i = 0; i < num; i++) {
+                try {
+                    const title = await makeTitle(banned);
+                    const lyrics = makeLyrics(title, banned);
+                    allLyrics[title] = lyrics;
+
+                    const div = document.createElement('div');
+                    div.className = 'song';
+                    div.textContent = title;
+                    div.onclick = () => showModal(title);
+                    list.appendChild(div);
+                } catch (error) {
+                    console.error('Error:', error);
+                    break;
+                }
+            }
+            
+            // Hide loading message
+            document.getElementById('loadingMsg').style.display = 'none';
+        }
+
+        function showModal(title) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalLyrics').textContent = allLyrics[title];
+            document.getElementById('modal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('show');
+        }
+
+        function copyLyrics() {
+            const lyrics = document.getElementById('modalLyrics').textContent;
+            navigator.clipboard.writeText(lyrics).then(() => {
+                alert('Lyrics copied!');
+            });
+        }
+
+        window.onload = () => {
+            document.getElementById('adj').value = defaults.adj.join(', ');
+            document.getElementById('nouns').value = defaults.nouns.join(', ');
+            document.getElementById('verbs').value = defaults.verbs.join(', ');
+        };
+    </script>
+</body>
+</html>
